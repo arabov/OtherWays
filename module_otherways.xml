@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_otherways" default="compile.module.otherways">
+  <dirname property="module.otherways.basedir" file="${ant.file.module_otherways}"/>
+  
+  <property name="module.jdk.home.otherways" value="${jdk.home.android_4.0.3_google_apis}"/>
+  <property name="module.jdk.bin.otherways" value="${jdk.bin.android_4.0.3_google_apis}"/>
+  <property name="module.jdk.classpath.otherways" value="jdk.classpath.android_4.0.3_google_apis"/>
+  
+  <property name="compiler.args.otherways" value="${compiler.args}"/>
+  
+  <property name="otherways.output.dir" value="${module.otherways.basedir}/out/production/OtherWays"/>
+  <property name="otherways.testoutput.dir" value="${module.otherways.basedir}/out/test/OtherWays"/>
+  
+  <path id="otherways.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="otherways.module.production.classpath">
+    <path refid="${module.jdk.classpath.otherways}"/>
+    <pathelement location="${sherlock-actionbar-googlemaps-lib-4.0.0.output.dir}"/>
+    <path refid="library.libs.classpath"/>
+  </path>
+  
+  <path id="otherways.runtime.production.module.classpath">
+    <pathelement location="${otherways.output.dir}"/>
+    <path refid="sherlock-actionbar-googlemaps-lib-4.0.0.runtime.production.module.classpath"/>
+  </path>
+  
+  <path id="otherways.module.classpath">
+    <path refid="${module.jdk.classpath.otherways}"/>
+    <pathelement location="${otherways.output.dir}"/>
+    <pathelement location="${sherlock-actionbar-googlemaps-lib-4.0.0.testoutput.dir}"/>
+    <pathelement location="${sherlock-actionbar-googlemaps-lib-4.0.0.output.dir}"/>
+    <path refid="library.libs.classpath"/>
+  </path>
+  
+  <path id="otherways.runtime.module.classpath">
+    <pathelement location="${otherways.testoutput.dir}"/>
+    <pathelement location="${otherways.output.dir}"/>
+    <path refid="sherlock-actionbar-googlemaps-lib-4.0.0.runtime.module.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.otherways">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.otherways">
+    <patternset refid="compiler.excluded"/>
+    <patternset refid="excluded.from.module.otherways"/>
+  </patternset>
+  
+  <path id="otherways.module.sourcepath">
+    <dirset dir="${module.otherways.basedir}">
+      <include name="src"/>
+      <include name="gen"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.otherways" depends="compile.module.otherways.production,compile.module.otherways.tests" description="Compile module OtherWays"/>
+  
+  <target name="compile.module.otherways.production" depends="register.custom.compilers,compile.module.sherlock-actionbar-googlemaps-lib-4.0.0" description="Compile module OtherWays; production classes">
+    <mkdir dir="${otherways.output.dir}"/>
+    <javac2 destdir="${otherways.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.otherways}/javac">
+      <compilerarg line="${compiler.args.otherways}"/>
+      <bootclasspath refid="otherways.module.bootclasspath"/>
+      <classpath refid="otherways.module.production.classpath"/>
+      <src refid="otherways.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.otherways"/>
+    </javac2>
+    
+    <copy todir="${otherways.output.dir}">
+      <fileset dir="${module.otherways.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+        <patternset refid="excluded.from.compilation.otherways"/>
+      </fileset>
+      <fileset dir="${module.otherways.basedir}/gen">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+        <patternset refid="excluded.from.compilation.otherways"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.otherways.tests" depends="register.custom.compilers,compile.module.otherways.production" description="compile module OtherWays; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.otherways" description="cleanup module">
+    <delete dir="${otherways.output.dir}"/>
+    <delete dir="${otherways.testoutput.dir}"/>
+  </target>
+</project>
