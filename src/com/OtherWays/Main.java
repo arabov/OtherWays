@@ -167,7 +167,7 @@ public class Main extends SherlockFragmentActivity {
         }
     }
 
-    public static class MapFragment extends SherlockFragment {
+    public class MapFragment extends SherlockFragment {
 
         public static final String TAG = "mapFragment";
 
