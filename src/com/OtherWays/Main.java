@@ -3,6 +3,7 @@ package com.OtherWays;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -18,7 +19,7 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.google.android.maps.*;
 
-import  com.OtherWays.*;
+import com.OtherWays.Overlay.*;
 import org.w3c.dom.Comment;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class Main extends SherlockFragmentActivity {
     private MyListFragment mMyListFragment;
     private HomeFragment mHomeFragment;
     private Fragment mVisible = null;
+    private Context context = this;
 
     private DBcontroller dbHelper =  new DBcontroller(this);
 
@@ -167,22 +169,28 @@ public class Main extends SherlockFragmentActivity {
             Exchanger.mMapView.setClickable(true);
             Exchanger.mMapView.setBuiltInZoomControls(true);
 
-            ArrayList<OverlayItem> mOverlays = new ArrayList<OverlayItem>();
+
+            Overlay itemizedoverlay = new Overlay(this.getResources().getDrawable(R.drawable.attraction), context);
 
             Cursor cursor = dbHelper.getAllPlaces();
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
                 String name = cursor.getString(cursor.getColumnIndex("PlaceName"));
+                String desc = cursor.getString(cursor.getColumnIndex("PlaceDesc"));
+                String under = cursor.getString(cursor.getColumnIndex("PlaceUnder"));
+                String work = cursor.getString(cursor.getColumnIndex("PlaceWork"));
+
+                String decription = desc + "\n" + "Метро: " + under + "\n" + "Время работы: " + work;
+
                 Double lat = cursor.getDouble(cursor.getColumnIndex("PlaceLat"));
                 Double lng = cursor.getDouble(cursor.getColumnIndex("PlaceLng"));
 
-                mOverlays.add(new OverlayItem(new GeoPoint((int) (lat * 1E6), (int) (lng * 1E6)), name, "b"));
-
+                itemizedoverlay.addOverlay(new OverlayItem(new GeoPoint((int) (lat * 1E6), (int) (lng * 1E6)), name, decription));
                 cursor.moveToNext();
             }
             cursor.close();
 
-            //Exchanger.mMapView.getOverlays().add();
+            Exchanger.mMapView.getOverlays().add(itemizedoverlay);
 
             return Exchanger.mMapView;
         }
