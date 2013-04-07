@@ -1,10 +1,8 @@
 package com.OtherWays;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.location.LocationManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -18,19 +16,22 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.app.SherlockListFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
-import com.google.android.maps.MapController;
-import com.google.android.maps.MapView;
-import com.google.android.maps.OverlayItem;
+import com.google.android.maps.*;
+
+import  com.OtherWays.*;
+import org.w3c.dom.Comment;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Main extends SherlockFragmentActivity {
 
     private MapFragment mMapFragment;
     private MyListFragment mMyListFragment;
     private HomeFragment mHomeFragment;
-
     private Fragment mVisible = null;
+
+    private DBcontroller dbHelper =  new DBcontroller(this);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,7 +41,6 @@ public class Main extends SherlockFragmentActivity {
         Exchanger.mMapView = new MapView(this, "0BhdX4jIPYsj2IzVimXgILU8ICs51b2hhRZnVjQ");
 
         setupFragments();
-        // We manually show the list Fragment.
         showFragment(mHomeFragment);
     }
 
@@ -53,11 +53,6 @@ public class Main extends SherlockFragmentActivity {
     private void setupFragments() {
         final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 
-		/*
-		 * If the activity is killed while in BG, it's possible that the
-		 * fragment still remains in the FragmentManager, so, we don't need to
-		 * add it again.
-		 */
         mMapFragment = (MapFragment) getSupportFragmentManager().findFragmentByTag(MapFragment.TAG);
         if (mMapFragment == null) {
             mMapFragment = new MapFragment();
@@ -78,7 +73,6 @@ public class Main extends SherlockFragmentActivity {
             ft.add(R.id.fragment_container, mHomeFragment, HomeFragment.TAG);
         }
         ft.hide(mHomeFragment);
-
         ft.commit();
     }
 
@@ -106,8 +100,6 @@ public class Main extends SherlockFragmentActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu with the options to show the Map and the List.
-
         getSupportMenuInflater().inflate(R.menu.menu, menu);
         return true;
     }
@@ -115,15 +107,12 @@ public class Main extends SherlockFragmentActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-
             case R.id.ic_home:
                 showFragment(mHomeFragment);
                 return true;
-
             case R.id.ic_list:
                 showFragment(mMyListFragment);
                 return true;
-
             case R.id.ic_map:
                 showFragment(mMapFragment);
                 return true;
@@ -133,15 +122,12 @@ public class Main extends SherlockFragmentActivity {
 
 
     public static class Exchanger {
-        // We will use this MapView always.
         public static MapView mMapView;
     }
 
 
     public static class MyListFragment extends SherlockListFragment {
-
         public static final String TAG = "listFragment";
-
         private final String[] mItems = { "Item 1", "Item 2",
                 "Item 3", "Item 4", "Item 5", "Item 6",
                 "Item 7", "Item 8", "Item 9", "Item 10" };
@@ -153,13 +139,11 @@ public class Main extends SherlockFragmentActivity {
             super.onCreate(arg0);
             setRetainInstance(true);
         }
-
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
             // Inflate the ListView layout file.
             return inflater.inflate(R.layout.list_fragment, null);
         }
-
         @Override
         public void onViewCreated(View arg0, Bundle arg1) {
             super.onViewCreated(arg0, arg1);
@@ -170,8 +154,6 @@ public class Main extends SherlockFragmentActivity {
     public class MapFragment extends SherlockFragment {
 
         public static final String TAG = "mapFragment";
-
-
         public MapFragment() {}
 
         @Override
@@ -179,33 +161,34 @@ public class Main extends SherlockFragmentActivity {
             super.onCreate(arg0);
             setRetainInstance(true);
         }
-
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
-            // The Activity created the MapView for us, so we can do some init stuff.
+
             Exchanger.mMapView.setClickable(true);
-            Exchanger.mMapView.setBuiltInZoomControls(true); // If you want.
+            Exchanger.mMapView.setBuiltInZoomControls(true);
 
-            MapController cMapController = Exchanger.mMapView.getController();
+            ArrayList<OverlayItem> mOverlays = new ArrayList<OverlayItem>();
 
-			/*
-			 * If you're getting Exceptions saying that the MapView already has
-			 * a parent, uncomment the next lines of code, but I think that it
-			 * won't be necessary. In other cases it was, but in this case I
-			 * don't this should happen.
-			 */
-			/*
-			 * final ViewGroup parent = (ViewGroup) Exchanger.mMapView.getParent();
-			 * if (parent != null) parent.removeView(Exchanger.mMapView);
-			 */
+            Cursor cursor = dbHelper.getAllPlaces();
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                String name = cursor.getString(cursor.getColumnIndex("PlaceName"));
+                Double lat = cursor.getDouble(cursor.getColumnIndex("PlaceLat"));
+                Double lng = cursor.getDouble(cursor.getColumnIndex("PlaceLng"));
+
+                mOverlays.add(new OverlayItem(new GeoPoint((int) (lat * 1E6), (int) (lng * 1E6)), name, "b"));
+
+                cursor.moveToNext();
+            }
+            cursor.close();
+
+            //Exchanger.mMapView.getOverlays().add();
 
             return Exchanger.mMapView;
         }
-
     }
 
     public static class HomeFragment extends SherlockFragment {
-
         public static final String TAG = "homeFragment";
 
         public HomeFragment() {}
@@ -215,13 +198,11 @@ public class Main extends SherlockFragmentActivity {
             super.onCreate(arg0);
             setRetainInstance(true);
         }
-
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
             // Inflate the ListView layout file.
             return inflater.inflate(R.layout.autification, null);
         }
-
         @Override
         public void onViewCreated(View arg0, Bundle arg1) {
             super.onViewCreated(arg0, arg1);

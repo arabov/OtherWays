@@ -28,7 +28,6 @@ public class ActionModes extends SherlockActivity {
                 mMode = startActionMode(new AnActionModeOfEpicProportions());
             }
         });
-        /*
         ((Button)findViewById(R.id.cancel)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -37,10 +36,9 @@ public class ActionModes extends SherlockActivity {
                 }
             }
         });
-        */
     }
 
-    private final class AnActionModeOfEpicProportions implements ActionMode.Callback {
+    public final class AnActionModeOfEpicProportions implements ActionMode.Callback {
         @Override
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
             //Used to put dark icons on light action bar
