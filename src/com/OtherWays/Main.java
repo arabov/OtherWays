@@ -7,11 +7,14 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
+import android.widget.Toast;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.app.SherlockListFragment;
@@ -156,6 +159,7 @@ public class Main extends SherlockFragmentActivity {
     public class MapFragment extends SherlockFragment {
 
         public static final String TAG = "mapFragment";
+
         public MapFragment() {}
 
         @Override
@@ -169,7 +173,6 @@ public class Main extends SherlockFragmentActivity {
             Exchanger.mMapView.setClickable(true);
             Exchanger.mMapView.setBuiltInZoomControls(true);
 
-
             Overlay itemizedoverlay = new Overlay(this.getResources().getDrawable(R.drawable.attraction), context);
 
             Cursor cursor = dbHelper.getAllPlaces();
@@ -179,9 +182,7 @@ public class Main extends SherlockFragmentActivity {
                 String desc = cursor.getString(cursor.getColumnIndex("PlaceDesc"));
                 String under = cursor.getString(cursor.getColumnIndex("PlaceUnder"));
                 String work = cursor.getString(cursor.getColumnIndex("PlaceWork"));
-
                 String decription = desc + "\n" + "Метро: " + under + "\n" + "Время работы: " + work;
-
                 Double lat = cursor.getDouble(cursor.getColumnIndex("PlaceLat"));
                 Double lng = cursor.getDouble(cursor.getColumnIndex("PlaceLng"));
 
@@ -191,6 +192,28 @@ public class Main extends SherlockFragmentActivity {
             cursor.close();
 
             Exchanger.mMapView.getOverlays().add(itemizedoverlay);
+
+            Exchanger.mMapView.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    long startTime = 0;
+                    long endTime = 0;
+
+                    if(motionEvent.getAction() == MotionEvent.ACTION_DOWN){
+                        startTime = motionEvent.getEventTime();
+                    }else if(motionEvent.getAction() == MotionEvent.ACTION_UP){
+                        endTime = motionEvent.getEventTime();
+                    }
+                    Log.d(TAG, "Time: " + (endTime - startTime));
+                    if(endTime - startTime > 1000){
+                        Log.d(TAG, "Clicked");
+                        return true; //notify that you handled this event (do not propagate)
+                    } else {
+                        return false;
+                    }
+                }
+            });
+
 
             return Exchanger.mMapView;
         }
