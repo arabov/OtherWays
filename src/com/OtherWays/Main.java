@@ -4,17 +4,18 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
-import android.widget.Toast;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.app.SherlockListFragment;
@@ -22,11 +23,6 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.google.android.maps.*;
 
-import com.OtherWays.Overlay.*;
-import org.w3c.dom.Comment;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Main extends SherlockFragmentActivity {
 
@@ -34,6 +30,7 @@ public class Main extends SherlockFragmentActivity {
     private MyListFragment mMyListFragment;
     private HomeFragment mHomeFragment;
     private Fragment mVisible = null;
+
     private Context context = this;
 
     private DBcontroller dbHelper =  new DBcontroller(this);
@@ -49,12 +46,6 @@ public class Main extends SherlockFragmentActivity {
         showFragment(mHomeFragment);
     }
 
-    /**
-     * This method does the setting up of the Fragments. It basically checks if
-     * the fragments exist and if they do, we'll hide them. If the fragments
-     * don't exist, we create them, add them to the FragmentManager and hide
-     * them.
-     */
     private void setupFragments() {
         final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 
@@ -160,12 +151,27 @@ public class Main extends SherlockFragmentActivity {
 
         public static final String TAG = "mapFragment";
 
+        MapController mapController = Exchanger.mMapView.getController();
+
         public MapFragment() {}
+
+        private void updateLoc(Location loc) {
+            GeoPoint locGeoPoint = new GeoPoint( (int)(loc.getLatitude()*1E6), (int)(loc.getLongitude()*1E6));
+            mapController.setCenter(locGeoPoint);
+            Exchanger.mMapView.invalidate();
+        }
 
         @Override
         public void onCreate(Bundle arg0) {
             super.onCreate(arg0);
             setRetainInstance(true);
+
+            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+            if (lastLocation != null) {
+                updateLoc(lastLocation);
+            }
         }
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
@@ -186,13 +192,14 @@ public class Main extends SherlockFragmentActivity {
                 Double lat = cursor.getDouble(cursor.getColumnIndex("PlaceLat"));
                 Double lng = cursor.getDouble(cursor.getColumnIndex("PlaceLng"));
 
-                itemizedoverlay.addOverlay(new OverlayItem(new GeoPoint((int) (lat * 1E6), (int) (lng * 1E6)), name, decription));
+                itemizedoverlay.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, decription));
                 cursor.moveToNext();
             }
             cursor.close();
 
             Exchanger.mMapView.getOverlays().add(itemizedoverlay);
 
+            /*
             Exchanger.mMapView.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -213,6 +220,7 @@ public class Main extends SherlockFragmentActivity {
                     }
                 }
             });
+            */
 
 
             return Exchanger.mMapView;
