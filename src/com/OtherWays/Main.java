@@ -2,26 +2,25 @@ package com.OtherWays;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
+import android.widget.Toast;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.app.SherlockListFragment;
+import com.actionbarsherlock.view.ActionMode;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.google.android.maps.*;
+
 
 
 public class Main extends SherlockFragmentActivity {
@@ -35,6 +34,9 @@ public class Main extends SherlockFragmentActivity {
 
     private DBcontroller dbHelper =  new DBcontroller(this);
 
+    public Location lastLocation;
+    public LocationManager locationManager;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,6 +46,9 @@ public class Main extends SherlockFragmentActivity {
 
         setupFragments();
         showFragment(mHomeFragment);
+
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
     }
 
     private void setupFragments() {
@@ -106,11 +111,49 @@ public class Main extends SherlockFragmentActivity {
             case R.id.ic_home:
                 showFragment(mHomeFragment);
                 return true;
+            /*
             case R.id.ic_list:
                 showFragment(mMyListFragment);
                 return true;
+            */
             case R.id.ic_map:
                 showFragment(mMapFragment);
+                return true;
+            case R.id.ic_settings:
+                startActionMode(new ActionMode.Callback() {
+                    @Override
+                    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                        String tag = mVisible.getTag();
+                        if (tag.equals(MapFragment.TAG)) {
+                            menu.add("Center").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                        } else if (tag.equals(HomeFragment.TAG)) {
+                        }
+                        return true;
+                    }
+                    @Override
+                    public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                        return false;
+                    }
+                    @Override
+                    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                        if (item.toString().equals("Center")) {
+                            if (lastLocation != null) {
+                                Exchanger.mMapView.getController().animateTo(
+                                        new GeoPoint(
+                                                (int)(lastLocation.getLatitude()*1E6),
+                                                (int)(lastLocation.getLongitude()*1E6)
+                                        )
+                                );
+                            }
+                        }
+                         //mode.finish();
+                        return true;
+                    }
+                    @Override
+                    public void onDestroyActionMode(ActionMode actionMode) {
+                        //To change body of implemented methods use File | Settings | File Templates.
+                    }
+                });
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -157,7 +200,7 @@ public class Main extends SherlockFragmentActivity {
 
         private void updateLoc(Location loc) {
             GeoPoint locGeoPoint = new GeoPoint( (int)(loc.getLatitude()*1E6), (int)(loc.getLongitude()*1E6));
-            mapController.setCenter(locGeoPoint);
+            mapController.animateTo(locGeoPoint);
             Exchanger.mMapView.invalidate();
         }
 
@@ -166,8 +209,8 @@ public class Main extends SherlockFragmentActivity {
             super.onCreate(arg0);
             setRetainInstance(true);
 
-            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-            Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            //LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            //Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
             if (lastLocation != null) {
                 updateLoc(lastLocation);
