@@ -126,6 +126,7 @@ public class Main extends SherlockFragmentActivity {
                         String tag = mVisible.getTag();
                         if (tag.equals(MapFragment.TAG)) {
                             menu.add("Center").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Search").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                         } else if (tag.equals(HomeFragment.TAG)) {
                         }
                         return true;
