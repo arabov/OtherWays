@@ -7,6 +7,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,6 +37,7 @@ public class Main extends SherlockFragmentActivity {
 
     public Location lastLocation;
     public LocationManager locationManager;
+    public Overlay item;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -126,7 +128,7 @@ public class Main extends SherlockFragmentActivity {
                         String tag = mVisible.getTag();
                         if (tag.equals(MapFragment.TAG)) {
                             menu.add("Center").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-                            menu.add("Search").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Layer").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                         } else if (tag.equals(HomeFragment.TAG)) {
                         }
                         return true;
@@ -141,10 +143,11 @@ public class Main extends SherlockFragmentActivity {
                             if (lastLocation != null) {
                                 Exchanger.mMapView.getController().animateTo(
                                         new GeoPoint(
-                                                (int)(lastLocation.getLatitude()*1E6),
-                                                (int)(lastLocation.getLongitude()*1E6)
+                                                (int) (lastLocation.getLatitude() * 1E6),
+                                                (int) (lastLocation.getLongitude() * 1E6)
                                         )
                                 );
+                                Exchanger.mMapView.getController().zoomIn();
                             }
                         }
                          //mode.finish();
@@ -202,6 +205,10 @@ public class Main extends SherlockFragmentActivity {
         private void updateLoc(Location loc) {
             GeoPoint locGeoPoint = new GeoPoint( (int)(loc.getLatitude()*1E6), (int)(loc.getLongitude()*1E6));
             mapController.animateTo(locGeoPoint);
+            Exchanger.mMapView.getOverlays().remove(item);
+            item = new Overlay(this.getResources().getDrawable(R.drawable.marker), context);
+            item.addOverlay(new OverlayItem(locGeoPoint, "You here!", ""));
+            Exchanger.mMapView.getOverlays().add(item);
             Exchanger.mMapView.invalidate();
         }
 
