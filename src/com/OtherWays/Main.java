@@ -257,11 +257,13 @@ public class Main extends SherlockFragmentActivity {
             Exchanger.mMapView.setClickable(true);
             Exchanger.mMapView.setBuiltInZoomControls(true);
 
-            Overlay itemizedoverlay = new Overlay(this.getResources().getDrawable(R.drawable.attraction), context);
+            Overlay attractions = new Overlay(this.getResources().getDrawable(R.drawable.attraction), context);
+            Overlay entertainment = new Overlay(this.getResources().getDrawable(R.drawable.party), context);
 
             Cursor cursor = dbHelper.getAllPlaces();
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
+                String type = cursor.getString(cursor.getColumnIndex("PlacesType"));
                 String name = cursor.getString(cursor.getColumnIndex("PlaceName"));
                 String desc = cursor.getString(cursor.getColumnIndex("PlaceDesc"));
                 String under = cursor.getString(cursor.getColumnIndex("PlaceUnder"));
@@ -270,12 +272,18 @@ public class Main extends SherlockFragmentActivity {
                 Double lat = cursor.getDouble(cursor.getColumnIndex("PlaceLat"));
                 Double lng = cursor.getDouble(cursor.getColumnIndex("PlaceLng"));
 
-                itemizedoverlay.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, decription));
+                if (type.equals("attraction")) {
+                    attractions.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, decription));
+                } else if (type.equals("entertainment")) {
+                    entertainment.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, decription));
+                }
+
                 cursor.moveToNext();
             }
             cursor.close();
 
-            Exchanger.mMapView.getOverlays().add(itemizedoverlay);
+            Exchanger.mMapView.getOverlays().add(attractions);
+            Exchanger.mMapView.getOverlays().add(entertainment);
 
             /*
             Exchanger.mMapView.setOnTouchListener(new View.OnTouchListener() {

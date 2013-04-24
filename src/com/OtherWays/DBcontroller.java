@@ -115,6 +115,59 @@ public class DBcontroller extends SQLiteOpenHelper {
         cv.put(colWork, "пн-вс 10.30-19.00");
         db.insert(table, colID, cv);
 
+        cv.put(colID, 6);
+        cv.put(colType, "entertainment");
+        cv.put(colCity, "Москва");
+        cv.put(colName, "16 тонн");
+        cv.put(colLat, 55.764288);
+        cv.put(colLng, 37.564466);
+        cv.put(colAddress, "Пресненский Вал, 6, стр. 1 ");
+        cv.put(colPhone, "(499) 253 53 00");
+        cv.put(colDesc, "Один из лучших музыкальных клубов");
+        cv.put(colUnder, "Улица 1905 года ");
+        cv.put(colWork, "пн-вс 11.00–6.00");
+        db.insert(table, colID, cv);
+
+        cv.put(colID, 7);
+        cv.put(colType, "entertainment");
+        cv.put(colCity, "Москва");
+        cv.put(colName, "Б2");
+        cv.put(colLat, 55.767003);
+        cv.put(colLng, 37.592983);
+        cv.put(colAddress, "Б.Садовая, 8/1");
+        cv.put(colPhone, "(495) 650 99 09");
+        cv.put(colDesc, "");
+        cv.put(colUnder, "Маяковская");
+        cv.put(colWork, "пн-вс 12.00–6.00 ");
+        db.insert(table, colID, cv);
+
+        cv.put(colID, 8);
+        cv.put(colType, "entertainment");
+        cv.put(colCity, "Москва");
+        cv.put(colName, "Stadium Live");
+        cv.put(colLat, 55.807807);
+        cv.put(colLng, 37.511786);
+        cv.put(colAddress, "Ленинградский просп., 80, корп. 17 ");
+        cv.put(colPhone, "(495) 540 55 40");
+        cv.put(colDesc, "");
+        cv.put(colUnder, "Сокол ");
+        cv.put(colWork, "пн-вс 10.00–22.00");
+        db.insert(table, colID, cv);
+
+        cv.put(colID, 9);
+        cv.put(colType, "entertainment");
+        cv.put(colCity, "Москва");
+        cv.put(colName, "Crocus City Hall");
+        cv.put(colLat, 55.819158);
+        cv.put(colLng, 37.387545);
+        cv.put(colAddress, "66-й км МКАД");
+        cv.put(colPhone, "(499) 550 00 55");
+        cv.put(colDesc, "Один из самых востребованных залов города");
+        cv.put(colUnder, "Мякинино");
+        cv.put(colWork, "");
+        db.insert(table, colID, cv);
+
+
     }
 
     @Override
