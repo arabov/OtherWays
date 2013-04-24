@@ -2,8 +2,7 @@ package com.OtherWays;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.location.Location;
-import android.location.LocationManager;
+import android.location.*;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -22,6 +21,9 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.google.android.maps.*;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 
 public class Main extends SherlockFragmentActivity {
@@ -199,6 +201,7 @@ public class Main extends SherlockFragmentActivity {
         public static final String TAG = "mapFragment";
 
         MapController mapController = Exchanger.mMapView.getController();
+        Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
 
         public MapFragment() {}
 
@@ -207,7 +210,18 @@ public class Main extends SherlockFragmentActivity {
             mapController.animateTo(locGeoPoint);
             Exchanger.mMapView.getOverlays().remove(item);
             item = new Overlay(this.getResources().getDrawable(R.drawable.marker), context);
-            item.addOverlay(new OverlayItem(locGeoPoint, "You here!", ""));
+
+            String addr = "";
+            try {
+                List<Address> addresses = geoCoder.getFromLocation(loc.getLatitude(), loc.getLongitude(), 1);
+                if (addresses.size() > 0) {
+                    addr += addresses.get(0).getAddressLine(0);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            item.addOverlay(new OverlayItem(locGeoPoint, "You here!", addr));
             Exchanger.mMapView.getOverlays().add(item);
             Exchanger.mMapView.invalidate();
         }
@@ -224,6 +238,19 @@ public class Main extends SherlockFragmentActivity {
                 updateLoc(lastLocation);
             }
         }
+        @Override
+        public void onResume() {
+            super.onResume();
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, myLocationListener);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, myLocationListener);
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            locationManager.removeUpdates(myLocationListener);
+        }
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
 
@@ -272,10 +299,27 @@ public class Main extends SherlockFragmentActivity {
                 }
             });
             */
-
-
             return Exchanger.mMapView;
         }
+        private LocationListener myLocationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                updateLoc(location);
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
+
+        };
     }
 
     public static class HomeFragment extends SherlockFragment {
