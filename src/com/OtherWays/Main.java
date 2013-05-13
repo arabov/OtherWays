@@ -20,8 +20,10 @@ import com.actionbarsherlock.view.ActionMode;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.google.android.maps.*;
+import com.microsoft.windowsazure.mobileservices.*;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Locale;
 
@@ -37,6 +39,8 @@ public class Main extends SherlockFragmentActivity {
 
     private DBcontroller dbHelper =  new DBcontroller(this);
 
+    private MobileServiceClient mClient;
+
     public Location lastLocation;
     public LocationManager locationManager;
     public Overlay item;
@@ -47,6 +51,16 @@ public class Main extends SherlockFragmentActivity {
         setContentView(R.layout.main);
 
         Exchanger.mMapView = new MapView(this, "0BhdX4jIPYsj2IzVimXgILU8ICs51b2hhRZnVjQ");
+
+        try {
+            MobileServiceClient mClient = new MobileServiceClient(
+                    "https://otherways2.azure-mobile.net/",
+                    "YMFLmydQzPIIPatUiccGjqfsoyjESW43",
+                    this
+            );
+        } catch (MalformedURLException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
 
         setupFragments();
         showFragment(mHomeFragment);

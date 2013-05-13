@@ -19,6 +19,7 @@ public class Overlay extends ItemizedOverlay {
     public Overlay(Drawable drawable, Context context) {
         super(boundCenterBottom(drawable));
         mContext = context;
+        populate(); // Add this
     }
 
     @Override
