@@ -20,12 +20,16 @@ import com.actionbarsherlock.view.ActionMode;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.google.android.maps.*;
+import com.google.gson.*;
 import com.microsoft.windowsazure.mobileservices.*;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 
 public class Main extends SherlockFragmentActivity {
@@ -40,10 +44,12 @@ public class Main extends SherlockFragmentActivity {
     private DBcontroller dbHelper =  new DBcontroller(this);
 
     private MobileServiceClient mClient;
+    private MobileServiceJsonTable mTable;
 
     public Location lastLocation;
     public LocationManager locationManager;
     public Overlay item;
+    public JsonParser parser = new JsonParser();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,11 +59,12 @@ public class Main extends SherlockFragmentActivity {
         Exchanger.mMapView = new MapView(this, "0BhdX4jIPYsj2IzVimXgILU8ICs51b2hhRZnVjQ");
 
         try {
-            MobileServiceClient mClient = new MobileServiceClient(
+            mClient = new MobileServiceClient(
                     "https://otherways2.azure-mobile.net/",
                     "YMFLmydQzPIIPatUiccGjqfsoyjESW43",
                     this
             );
+            mTable = mClient.getTable("Markers");
         } catch (MalformedURLException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -273,7 +280,7 @@ public class Main extends SherlockFragmentActivity {
 
             Overlay attractions = new Overlay(this.getResources().getDrawable(R.drawable.attraction), context);
             Overlay entertainment = new Overlay(this.getResources().getDrawable(R.drawable.party), context);
-
+            /*
             Cursor cursor = dbHelper.getAllPlaces();
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
@@ -298,6 +305,30 @@ public class Main extends SherlockFragmentActivity {
 
             Exchanger.mMapView.getOverlays().add(attractions);
             Exchanger.mMapView.getOverlays().add(entertainment);
+            */
+            mTable.where().execute(new TableJsonQueryCallback() {
+                @Override
+                public void onCompleted(JsonElement result, int count, Exception exception, ServiceFilterResponse response) {
+                    if (exception != null) {
+                        Log.d("QUERY_EXCEPTION", exception.toString());
+                    } else {
+                        JsonArray jsonArray = result.getAsJsonArray();
+                        for (int i = 0; i < jsonArray.size(); i++) {
+                            JsonElement elm = jsonArray.get(i);
+                        }
+                        /*
+                        JsonArray jsonArray = result.getAsJsonArray();
+                        for (int i = 0; i < 3; i++) {
+                            JsonObject element = jsonArray.getAsJsonObject();
+                            System.out.format("Player #%d: Realm = %s, Guild = %s\n"
+                                    , i + 1, element.get("realm"),element.get("guild"));
+
+                        }
+                        */
+                    }
+                }
+            });
+
 
             /*
             Exchanger.mMapView.setOnTouchListener(new View.OnTouchListener() {
