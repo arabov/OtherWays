@@ -50,6 +50,7 @@
         <jarDirectory url="file://$MODULE_DIR$/lib/azuresdk-android-0.2.0" recursive="false" type="SOURCES" />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="facebook" />
   </component>
 </module>
 
