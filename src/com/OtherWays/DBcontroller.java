@@ -181,3 +181,27 @@ public class DBcontroller extends SQLiteOpenHelper {
         return cursor;
     }
 }
+//private DBcontroller dbHelper =  new DBcontroller(this);
+/*
+            Cursor cursor = dbHelper.getAllPlaces();
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                String type = cursor.getString(cursor.getColumnIndex("PlacesType"));
+                String name = cursor.getString(cursor.getColumnIndex("PlaceName"));
+                String desc = cursor.getString(cursor.getColumnIndex("PlaceDesc"));
+                String under = cursor.getString(cursor.getColumnIndex("PlaceUnder"));
+                String work = cursor.getString(cursor.getColumnIndex("PlaceWork"));
+                String decription = desc + "\n" + "Метро: " + under + "\n" + "Время работы: " + work;
+                Double lat = cursor.getDouble(cursor.getColumnIndex("PlaceLat"));
+                Double lng = cursor.getDouble(cursor.getColumnIndex("PlaceLng"));
+
+                if (type.equals("attraction")) {
+                    attractions.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, decription));
+                } else if (type.equals("entertainment")) {
+                    entertainment.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, decription));
+                }
+
+                cursor.moveToNext();
+            }
+            cursor.close();
+*/

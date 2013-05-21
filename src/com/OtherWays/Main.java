@@ -1,27 +1,37 @@
 package com.OtherWays;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.location.*;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-
+import android.widget.TextView;
 import android.widget.Toast;
+
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.app.SherlockListFragment;
 import com.actionbarsherlock.view.ActionMode;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+
+import com.facebook.SessionState;
+import com.facebook.UiLifecycleHelper;
 import com.google.android.maps.*;
 import com.google.gson.*;
+
 import com.microsoft.windowsazure.mobileservices.*;
+
+import com.facebook.Session;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -29,32 +39,54 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 
 public class Main extends SherlockFragmentActivity {
+    private Boolean SESSION = true;
 
     private MapFragment mMapFragment;
-    private MyListFragment mMyListFragment;
+    private UserLogined mUserLogined;
     private HomeFragment mHomeFragment;
     private Fragment mVisible = null;
 
     private Context context = this;
 
-    private DBcontroller dbHelper =  new DBcontroller(this);
-
     private MobileServiceClient mClient;
     private MobileServiceJsonTable mTable;
+
+    private UiLifecycleHelper uiHelper;
+    private Session.StatusCallback callback =
+            new Session.StatusCallback() {
+                @Override
+                public void call(Session session, SessionState state, Exception exception) {
+                    onSessionStateChange(session, state, exception);
+                }
+            };
 
     public Location lastLocation;
     public LocationManager locationManager;
     public Overlay item;
-    public JsonParser parser = new JsonParser();
+
+    public Overlay oAttractions;
+    public Overlay oEntertainments;
+    public Overlay oTheaters;
+    public Overlay oCinemas;
+    public Overlay oMuseums;
+    public Overlay oClubs;
+    public Overlay oConcerthalls;
+    public Overlay oParks;
+    public Overlay oShops;
+    public Overlay oHotels;
+    public Overlay oAirports;
+    public Overlay oRailways;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+        uiHelper = new UiLifecycleHelper(this, callback);
+        uiHelper.onCreate(savedInstanceState);
 
         Exchanger.mMapView = new MapView(this, "0BhdX4jIPYsj2IzVimXgILU8ICs51b2hhRZnVjQ");
 
@@ -75,6 +107,43 @@ public class Main extends SherlockFragmentActivity {
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
     }
+    @Override
+    public void onResume() {
+        super.onResume();
+        uiHelper.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        uiHelper.onPause();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        uiHelper.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        uiHelper.onDestroy();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        uiHelper.onSaveInstanceState(outState);
+    }
+
+    private void onSessionStateChange(Session session, SessionState state, Exception exception) {
+        if (state.isOpened()) {
+            SESSION = true;
+        } else if (state.isClosed()) {
+            SESSION = false;
+        }
+    }
 
     private void setupFragments() {
         final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -86,12 +155,12 @@ public class Main extends SherlockFragmentActivity {
         }
         ft.hide(mMapFragment);
 
-        mMyListFragment = (MyListFragment) getSupportFragmentManager().findFragmentByTag(MyListFragment.TAG);
-        if (mMyListFragment == null) {
-            mMyListFragment = new MyListFragment();
-            ft.add(R.id.fragment_container, mMyListFragment, MyListFragment.TAG);
+        mUserLogined = (UserLogined) getSupportFragmentManager().findFragmentByTag(UserLogined.TAG);
+        if (mUserLogined == null) {
+            mUserLogined = new UserLogined();
+            ft.add(R.id.fragment_container, mUserLogined, UserLogined.TAG);
         }
-        ft.hide(mMyListFragment);
+        ft.hide(mUserLogined);
 
         mHomeFragment = (HomeFragment) getSupportFragmentManager().findFragmentByTag(HomeFragment.TAG);
         if (mHomeFragment == null) {
@@ -102,16 +171,6 @@ public class Main extends SherlockFragmentActivity {
         ft.commit();
     }
 
-    /**
-     * This method shows the given Fragment and if there was another visible
-     * fragment, it gets hidden. We can just do this because we know that both
-     * the mMyListFragment and the mMapFragment were added in the Activity's
-     * onCreate, so we just create the fragments once at first and not every
-     * time. This will avoid facing some problems with the MapView.
-     *
-     * @param fragmentIn
-     *            The fragment to show.
-     */
     private void showFragment(Fragment fragmentIn) {
         if (fragmentIn == null) return;
 
@@ -134,24 +193,57 @@ public class Main extends SherlockFragmentActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.ic_home:
-                showFragment(mHomeFragment);
+                if (SESSION) {
+                    showFragment(mUserLogined);
+                } else {
+                    showFragment(mHomeFragment);
+                }
                 return true;
-            /*
-            case R.id.ic_list:
-                showFragment(mMyListFragment);
-                return true;
-            */
             case R.id.ic_map:
                 showFragment(mMapFragment);
+                /*
+                if (SESSION) {
+                    showFragment(mMapFragment);
+                } else {
+                    showFragment(mHomeFragment);
+                }
+                */
+                //showFragment(mMapFragment);
                 return true;
             case R.id.ic_settings:
                 startActionMode(new ActionMode.Callback() {
+                    Boolean attractions = true;
+                    Boolean entertainments = true;
+                    Boolean theaters = true;
+                    Boolean cinemas = true;
+                    Boolean museums = true;
+                    Boolean clubs = true;
+                    Boolean concerthalls = true;
+                    Boolean parks = true;
+                    Boolean shops = true;
+                    Boolean hotels = true;
+                    Boolean airports = true;
+                    Boolean railways = true;
+
+
                     @Override
                     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                         String tag = mVisible.getTag();
                         if (tag.equals(MapFragment.TAG)) {
                             menu.add("Center").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-                            menu.add("Layer").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            //menu.add("Layer").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Достопримечательности").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Развлечения").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Театры").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Кинотеатры").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Музеи").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Клубы").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Концертные залы").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Парки").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Магазины").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Отели и транспорт").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Аэропорты").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Вокзалы").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                         } else if (tag.equals(HomeFragment.TAG)) {
                         }
                         return true;
@@ -170,12 +262,63 @@ public class Main extends SherlockFragmentActivity {
                                                 (int) (lastLocation.getLongitude() * 1E6)
                                         )
                                 );
-                                Exchanger.mMapView.getController().zoomIn();
+                                //Exchanger.mMapView.getController().zoomIn();
                             }
                         }
-                         //mode.finish();
+                        if (item.toString().equals("Достопримечательности")) {
+                            if (attractions) { attractions = false; Exchanger.mMapView.getOverlays().remove(oAttractions); }
+                            else { attractions = true; Exchanger.mMapView.getOverlays().add(oAttractions); }
+                        }
+                        if (item.toString().equals("Развлечения")) {
+                            if (entertainments) { entertainments = false; Exchanger.mMapView.getOverlays().remove(oEntertainments); }
+                            else { entertainments = true; Exchanger.mMapView.getOverlays().add(oEntertainments); }
+                        }
+                        if (item.toString().equals("Театры")) {
+                            if (theaters) { theaters = false; Exchanger.mMapView.getOverlays().remove(oTheaters); }
+                            else { theaters = true; Exchanger.mMapView.getOverlays().add(oTheaters); }
+                        }
+                        if (item.toString().equals("Кинотеатры")) {
+                            if (cinemas) { cinemas = false; Exchanger.mMapView.getOverlays().remove(oCinemas); }
+                            else { cinemas = true; Exchanger.mMapView.getOverlays().add(oCinemas); }
+                        }
+                        if (item.toString().equals("Музеи")) {
+                            if (museums) { museums = false; Exchanger.mMapView.getOverlays().remove(oMuseums); }
+                            else { museums = true; Exchanger.mMapView.getOverlays().add(oMuseums); }
+                        }
+                        if (item.toString().equals("Клубы")) {
+                            if (clubs) { clubs = false; Exchanger.mMapView.getOverlays().remove(oClubs); }
+                            else { clubs = true; Exchanger.mMapView.getOverlays().add(oClubs); }
+                        }
+                        if (item.toString().equals("Концертные залы")) {
+                            if (concerthalls) { concerthalls = false; Exchanger.mMapView.getOverlays().remove(oConcerthalls); }
+                            else { concerthalls = true; Exchanger.mMapView.getOverlays().add(oConcerthalls); }
+                        }
+                        if (item.toString().equals("Парки")) {
+                            if (parks) { parks = false; Exchanger.mMapView.getOverlays().remove(oParks); }
+                            else { parks = true; Exchanger.mMapView.getOverlays().add(oParks); }
+                        }
+                        if (item.toString().equals("Магазины")) {
+                            if (shops) { shops = false; Exchanger.mMapView.getOverlays().remove(oShops); }
+                            else { shops = true; Exchanger.mMapView.getOverlays().add(oShops); }
+                        }
+                        if (item.toString().equals("Отели и транспорт")) {
+                            if (hotels) { hotels = false; Exchanger.mMapView.getOverlays().remove(oHotels); }
+                            else { hotels = true; Exchanger.mMapView.getOverlays().add(oHotels); }
+                        }
+                        if (item.toString().equals("Аэропорты")) {
+                            if (airports) { airports = false; Exchanger.mMapView.getOverlays().remove(oAirports); }
+                            else { airports = true; Exchanger.mMapView.getOverlays().add(oAirports); }
+                        }
+                        if (item.toString().equals("Вокзалы")) {
+                            if (railways) { railways = false; Exchanger.mMapView.getOverlays().remove(oRailways); }
+                            else { railways = true; Exchanger.mMapView.getOverlays().add(oRailways); }
+                        }
+
+                        Exchanger.mMapView.invalidate();
+                        //mode.finish();
                         return true;
                     }
+
                     @Override
                     public void onDestroyActionMode(ActionMode actionMode) {
                         //To change body of implemented methods use File | Settings | File Templates.
@@ -189,32 +332,6 @@ public class Main extends SherlockFragmentActivity {
 
     public static class Exchanger {
         public static MapView mMapView;
-    }
-
-
-    public static class MyListFragment extends SherlockListFragment {
-        public static final String TAG = "listFragment";
-        private final String[] mItems = { "Item 1", "Item 2",
-                "Item 3", "Item 4", "Item 5", "Item 6",
-                "Item 7", "Item 8", "Item 9", "Item 10" };
-
-        public MyListFragment() {}
-
-        @Override
-        public void onCreate(Bundle arg0) {
-            super.onCreate(arg0);
-            setRetainInstance(true);
-        }
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
-            // Inflate the ListView layout file.
-            return inflater.inflate(R.layout.list_fragment, null);
-        }
-        @Override
-        public void onViewCreated(View arg0, Bundle arg1) {
-            super.onViewCreated(arg0, arg1);
-            setListAdapter(new ArrayAdapter<String>(getSherlockActivity(), android.R.layout.simple_list_item_1, android.R.id.text1, mItems));
-        }
     }
 
     public class MapFragment extends SherlockFragment {
@@ -278,58 +395,108 @@ public class Main extends SherlockFragmentActivity {
             Exchanger.mMapView.setClickable(true);
             Exchanger.mMapView.setBuiltInZoomControls(true);
 
-            Overlay attractions = new Overlay(this.getResources().getDrawable(R.drawable.attraction), context);
-            Overlay entertainment = new Overlay(this.getResources().getDrawable(R.drawable.party), context);
-            /*
-            Cursor cursor = dbHelper.getAllPlaces();
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                String type = cursor.getString(cursor.getColumnIndex("PlacesType"));
-                String name = cursor.getString(cursor.getColumnIndex("PlaceName"));
-                String desc = cursor.getString(cursor.getColumnIndex("PlaceDesc"));
-                String under = cursor.getString(cursor.getColumnIndex("PlaceUnder"));
-                String work = cursor.getString(cursor.getColumnIndex("PlaceWork"));
-                String decription = desc + "\n" + "Метро: " + under + "\n" + "Время работы: " + work;
-                Double lat = cursor.getDouble(cursor.getColumnIndex("PlaceLat"));
-                Double lng = cursor.getDouble(cursor.getColumnIndex("PlaceLng"));
+            oAttractions = new Overlay(this.getResources().getDrawable(R.drawable.attractions), context);
+            oEntertainments = new Overlay(this.getResources().getDrawable(R.drawable.entertainment), context);
+            oTheaters = new Overlay(this.getResources().getDrawable(R.drawable.theaters), context);
+            oCinemas = new Overlay(this.getResources().getDrawable(R.drawable.cinemas), context);
+            oMuseums = new Overlay(this.getResources().getDrawable(R.drawable.museums), context);
+            oClubs = new Overlay(this.getResources().getDrawable(R.drawable.clubs), context);
+            oConcerthalls = new Overlay(this.getResources().getDrawable(R.drawable.concerthalls), context);
+            oParks = new Overlay(this.getResources().getDrawable(R.drawable.parks), context);
+            oShops = new Overlay(this.getResources().getDrawable(R.drawable.shops), context);
+            oHotels = new Overlay(this.getResources().getDrawable(R.drawable.hotels), context);
+            oAirports = new Overlay(this.getResources().getDrawable(R.drawable.airports), context);
+            oRailways = new Overlay(this.getResources().getDrawable(R.drawable.railways), context);
 
-                if (type.equals("attraction")) {
-                    attractions.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, decription));
-                } else if (type.equals("entertainment")) {
-                    entertainment.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, decription));
-                }
-
-                cursor.moveToNext();
-            }
-            cursor.close();
-
-            Exchanger.mMapView.getOverlays().add(attractions);
-            Exchanger.mMapView.getOverlays().add(entertainment);
-            */
-            mTable.where().execute(new TableJsonQueryCallback() {
+            mTable.where().top(166).execute(new TableJsonQueryCallback() {
                 @Override
                 public void onCompleted(JsonElement result, int count, Exception exception, ServiceFilterResponse response) {
                     if (exception != null) {
                         Log.d("QUERY_EXCEPTION", exception.toString());
                     } else {
+                        Log.d("---AZURE---", result.toString());
                         JsonArray jsonArray = result.getAsJsonArray();
                         for (int i = 0; i < jsonArray.size(); i++) {
-                            JsonElement elm = jsonArray.get(i);
-                        }
-                        /*
-                        JsonArray jsonArray = result.getAsJsonArray();
-                        for (int i = 0; i < 3; i++) {
-                            JsonObject element = jsonArray.getAsJsonObject();
-                            System.out.format("Player #%d: Realm = %s, Guild = %s\n"
-                                    , i + 1, element.get("realm"),element.get("guild"));
+                            JsonObject object = jsonArray.get(i).getAsJsonObject();
 
+                            String name = object.get("Name").getAsString();
+                            String desc = object.get("Description").getAsString();
+                            String address = object.get("Adress").getAsString();
+                            String workTime = object.get("WorkTime").getAsString();
+                            String subway = object.get("Subway").getAsString();
+                            Float lng = object.get("lng").getAsFloat();
+                            Float lat = object.get("lat").getAsFloat();
+                            Integer type = object.get("MarkerType_id").getAsInt();
+
+                            String fullDesc = "";
+                            if (!desc.equals("")) {
+                                fullDesc += desc + "\n";
+                            }
+                            if (!address.equals("")) {
+                                fullDesc += "Адрес: " + address;
+                            }
+                            if (!subway.equals("")) {
+                                fullDesc += "\n" + "Метро: " + subway;
+                            }
+                            if (!workTime.equals("")) {
+                                fullDesc += "\n" + "Время работы: " + workTime;
+                            }
+                            switch (type) {
+                                case 0:
+                                    oAttractions.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                case 1:
+                                    oEntertainments.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                case 2:
+                                    oTheaters.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                case 3:
+                                    oCinemas.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                case 4:
+                                    oMuseums.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                case 5:
+                                    oClubs.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                case 6:
+                                    oConcerthalls.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                case 7:
+                                    oParks.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                case 8:
+                                    oShops.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                case 9: case 12:
+                                    oHotels.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                case 10:
+                                    oAirports.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                case 11:
+                                    oRailways.addOverlay(new OverlayItem(new GeoPoint( (int)(lat * 1E6), (int)(lng * 1E6) ), name, fullDesc));
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
-                        */
+                        Exchanger.mMapView.getOverlays().add(oAttractions);
+                        Exchanger.mMapView.getOverlays().add(oEntertainments);
+                        Exchanger.mMapView.getOverlays().add(oTheaters);
+                        Exchanger.mMapView.getOverlays().add(oCinemas);
+                        Exchanger.mMapView.getOverlays().add(oMuseums);
+                        Exchanger.mMapView.getOverlays().add(oClubs);
+                        Exchanger.mMapView.getOverlays().add(oConcerthalls);
+                        Exchanger.mMapView.getOverlays().add(oParks);
+                        Exchanger.mMapView.getOverlays().add(oShops);
+                        Exchanger.mMapView.getOverlays().add(oHotels);
+                        Exchanger.mMapView.getOverlays().add(oAirports);
+                        Exchanger.mMapView.getOverlays().add(oRailways);
                     }
                 }
             });
-
-
             /*
             Exchanger.mMapView.setOnTouchListener(new View.OnTouchListener() {
                 @Override
@@ -380,6 +547,20 @@ public class Main extends SherlockFragmentActivity {
 
         public HomeFragment() {}
 
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
+            // Inflate the ListView layout file.
+            return inflater.inflate(R.layout.autification, vg, false);
+        }
+
+    }
+
+    public static class UserLogined extends SherlockFragment {
+        public static final String TAG = "UserLogined";
+
+        public UserLogined() {}
+
         @Override
         public void onCreate(Bundle arg0) {
             super.onCreate(arg0);
@@ -388,7 +569,7 @@ public class Main extends SherlockFragmentActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
             // Inflate the ListView layout file.
-            return inflater.inflate(R.layout.autification, null);
+            return inflater.inflate(R.layout.fbuser, vg, false);
         }
         @Override
         public void onViewCreated(View arg0, Bundle arg1) {
