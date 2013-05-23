@@ -3,7 +3,7 @@
 
     <item
         android:id="@+id/ic_home"
-        android:icon="@drawable/com_facebook_icon"
+        android:icon="@android:drawable/ic_menu_mylocation"
         android:showAsAction="ifRoom|withText"
         android:title="Home"/>
     <!--
@@ -23,5 +23,4 @@
         android:icon="@android:drawable/ic_menu_manage"
         android:showAsAction="ifRoom|withText"
         android:title="Settings"/>
-
 </menu>

@@ -1,68 +1,134 @@
 <?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/scrollView">
+    <TableLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Достопримечательности"
+                    android:id="@+id/attractions" android:layout_column="0" android:checked="true"
+                    android:clickable="true"/>
+        </TableRow>
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Развлечения"
+                    android:id="@+id/entertainments" android:layout_column="0" android:checked="true"
+                    android:clickable="true"/>
+        </TableRow>
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Театры"
+                    android:id="@+id/theaters" android:layout_column="0" android:checked="true"
+                    android:clickable="true"/>
+        </TableRow>
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Кинотеатры"
+                    android:id="@+id/cinemas" android:layout_column="0" android:checked="true"
+                    android:clickable="true"/>
+        </TableRow>
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Музеи"
+                    android:id="@+id/museums" android:layout_column="0" android:checked="true"
+                    android:clickable="true"/>
+        </TableRow>
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Клубы"
+                    android:id="@+id/clubs" android:layout_column="0" android:checked="true"
+                    android:clickable="true"/>
+        </TableRow>
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Концертные залы"
+                    android:id="@+id/concerthalls" android:layout_column="0" android:checked="true"
+                    android:clickable="true"/>
+        </TableRow>
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Парки"
+                    android:id="@+id/parks" android:layout_column="0" android:checked="true" android:clickable="true"/>
+        </TableRow>
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Магазины"
+                    android:id="@+id/shops" android:layout_column="0" android:checked="true" android:clickable="true"/>
+        </TableRow>
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Отели и транспорт"
+                    android:id="@+id/hotels" android:layout_column="0" android:checked="true" android:clickable="true"/>
+        </TableRow>
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Аэропорты"
+                    android:id="@+id/airports" android:layout_column="0" android:checked="true"
+                    android:clickable="true"/>
+        </TableRow>
+        <TableRow
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Вокзалы"
+                    android:id="@+id/railways" android:layout_column="0" android:checked="true"
+                    android:clickable="true"/>
+        </TableRow>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
+        <Button
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="Ok"
+                android:id="@+id/layersButton" android:clickable="true"/>
 
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Достопримечательности"
-            android:id="@+id/attractions" android:layout_gravity="left|center_vertical" android:checked="false"/>
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Развлечения"
-            android:id="@+id/entertaiments" android:layout_gravity="left|center_vertical" android:checked="false"/>
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Театры"
-            android:id="@+id/theaters" android:layout_gravity="left|center_vertical" android:checked="false"/>
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Кинотеатры"
-            android:id="@+id/cinemas" android:layout_gravity="left|center_vertical" android:checked="false"/>
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Музеи"
-            android:id="@+id/museums" android:layout_gravity="left|center_vertical" android:checked="false"/>
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Клубы"
-            android:id="@+id/clubs" android:layout_gravity="left|center_vertical" android:checked="false"/>
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Концертные залы"
-            android:id="@+id/concerthalls" android:layout_gravity="left|center_vertical" android:checked="false"/>
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Парки"
-            android:id="@+id/parks" android:layout_gravity="left|center_vertical" android:checked="false"/>
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Магазины"
-            android:id="@+id/shops" android:layout_gravity="left|center_vertical" android:checked="false"/>
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Отели и транспорт"
-            android:id="@+id/hotels" android:layout_gravity="left|center_vertical" android:checked="false"/>
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Аэропорты"
-            android:id="@+id/airports" android:layout_gravity="left|center_vertical" android:checked="false"/>
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Вокзалы"
-            android:id="@+id/railways" android:layout_gravity="left|center_vertical" android:checked="false"/>
-</LinearLayout>
+    </TableLayout>
+</ScrollView>
