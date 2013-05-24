@@ -2,4 +2,17 @@
 <resources>
     <string name="app_name">OtherWays</string>
     <string name="app_id">777</string>
+
+    <string name="attractions_0">Достопримечательности</string>
+    <string name="entertaiments_1">Развлечения</string>
+    <string name="theaters_2">Театры</string>
+    <string name="cinemas_3">Кинотеатры</string>
+    <string name="museums_4">Музеи</string>
+    <string name="clubs_5">Клубы</string>
+    <string name="concerthalls_6">Концертные залы</string>
+    <string name="parks_7">Парки</string>
+    <string name="shops_8">Магазины</string>
+    <string name="hotels_9">Отели и транспорт</string>
+    <string name="airports_10">Аэропорты</string>
+    <string name="railways_11">Вокзалы</string>
 </resources>

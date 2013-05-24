@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="placesarray">
+        <item>@string/attractions_0</item>
+        <item>@string/entertaiments_1</item>
+        <item>@string/theaters_2</item>
+        <item>@string/museums_4</item>
+        <item>@string/clubs_5</item>
+        <item>@string/concerthalls_6</item>
+        <item>@string/parks_7</item>
+        <item>@string/shops_8</item>
+        <item>@string/hotels_9</item>
+        <item>@string/airports_10</item>
+        <item>@string/railways_11</item>
+    </string-array>
+</resources> 

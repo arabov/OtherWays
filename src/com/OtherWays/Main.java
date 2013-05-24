@@ -42,12 +42,13 @@ public class Main extends SherlockFragmentActivity {
     private HomeFragment mHomeFragment;
     private LayersFragment mLayersFragment;
     private RoutesFragment mRoutesFragment;
+    private AddMarker mAddMarker;
     private Fragment mVisible = null;
 
     private Context context = this;
 
     private MobileServiceClient mClient;
-    private MobileServiceJsonTable mTable;
+    private MobileServiceJsonTable markersTable;
 
     private UiLifecycleHelper uiHelper;
     private Session.StatusCallback callback =
@@ -60,8 +61,10 @@ public class Main extends SherlockFragmentActivity {
 
     public Location lastLocation;
     public LocationManager locationManager;
-    public Overlay item;
+    public Float clickedLatitude;
+    public Float clickedLongitude;
 
+    public Overlay item;
     public Overlay oAttractions;
     public Overlay oEntertainments;
     public Overlay oTheaters;
@@ -91,7 +94,7 @@ public class Main extends SherlockFragmentActivity {
                     "YMFLmydQzPIIPatUiccGjqfsoyjESW43",
                     this
             );
-            mTable = mClient.getTable("Markers");
+            markersTable = mClient.getTable("Markers");
         } catch (MalformedURLException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -173,6 +176,13 @@ public class Main extends SherlockFragmentActivity {
         }
         ft.hide(mRoutesFragment);
 
+        mAddMarker = (AddMarker) getSupportFragmentManager().findFragmentByTag(AddMarker.TAG);
+        if (mAddMarker == null) {
+            mAddMarker = new AddMarker();
+            ft.add(R.id.fragment_container, mAddMarker, AddMarker.TAG);
+        }
+        ft.hide(mAddMarker);
+
 
         ft.commit();
     }
@@ -209,7 +219,8 @@ public class Main extends SherlockFragmentActivity {
                     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                         String tag = mVisible.getTag();
                         if (tag.equals(MapFragment.TAG)) {
-                            menu.add("Center").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Add").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Center").setIcon(R.drawable.marker).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                             menu.add("Markers").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                             menu.add("Routes").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                         } else if (tag.equals(HomeFragment.TAG)) {
@@ -222,6 +233,23 @@ public class Main extends SherlockFragmentActivity {
                     }
                     @Override
                     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                        if (item.toString().equals("Add")) {
+                            //showFragment(mAddMarker);
+                            Exchanger.mMapView.setOnTouchListener(new View.OnTouchListener() {
+                                @Override
+                                public boolean onTouch(View v, MotionEvent event) {
+                                    if(event.getAction() == MotionEvent.ACTION_DOWN) {
+                                        Projection proj = Exchanger.mMapView.getProjection();
+                                        GeoPoint loc = proj.fromPixels((int)event.getX(), (int)event.getY());
+                                        clickedLatitude = ((float)loc.getLongitudeE6())/1000000;
+                                        clickedLongitude = ((float)loc.getLatitudeE6())/1000000;
+                                        Exchanger.mMapView.setOnTouchListener(null);
+                                        showFragment(mAddMarker);
+                                    }
+                                    return true;
+                                }
+                            });
+                        }
                         if (item.toString().equals("Center")) {
                             if (lastLocation != null) {
                                 Exchanger.mMapView.getController().animateTo(
@@ -230,7 +258,6 @@ public class Main extends SherlockFragmentActivity {
                                                 (int) (lastLocation.getLongitude() * 1E6)
                                         )
                                 );
-                                //Exchanger.mMapView.getController().zoomIn();
                             }
                         }
                         if (item.toString().equals("Markers")) {
@@ -239,15 +266,11 @@ public class Main extends SherlockFragmentActivity {
                         if (item.toString().equals("Routes")) {
                             showFragment(mRoutesFragment);
                         }
-
-
                         mode.finish();
                         return true;
                     }
-
                     @Override
                     public void onDestroyActionMode(ActionMode actionMode) {
-                        //To change body of implemented methods use File | Settings | File Templates.
                     }
                 });
                 return true;
@@ -295,9 +318,6 @@ public class Main extends SherlockFragmentActivity {
             super.onCreate(arg0);
             setRetainInstance(true);
 
-            //LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-            //Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
             if (lastLocation != null) {
                 updateLoc(lastLocation);
             }
@@ -334,7 +354,7 @@ public class Main extends SherlockFragmentActivity {
             oAirports = new Overlay(this.getResources().getDrawable(R.drawable.airports), context);
             oRailways = new Overlay(this.getResources().getDrawable(R.drawable.railways), context);
 
-            mTable.where().top(166).execute(new TableJsonQueryCallback() {
+            markersTable.where().top(200).execute(new TableJsonQueryCallback() {
                 @Override
                 public void onCompleted(JsonElement result, int count, Exception exception, ServiceFilterResponse response) {
                     if (exception != null) {
@@ -571,9 +591,9 @@ public class Main extends SherlockFragmentActivity {
             super.onViewCreated(arg0, arg1);
 
             Button button = (Button)findViewById(R.id.routesButton);
-                final CheckBox attractionsroutes = (CheckBox)findViewById(R.id.attractionsroutes);
-                final CheckBox entertainmentsroutes = (CheckBox)findViewById(R.id.entertainmentsroutes);
-                final CheckBox childroutes = (CheckBox)findViewById(R.id.childroutes);
+            final CheckBox attractionsroutes = (CheckBox)findViewById(R.id.attractionsroutes);
+            final CheckBox entertainmentsroutes = (CheckBox)findViewById(R.id.entertainmentsroutes);
+            final CheckBox childroutes = (CheckBox)findViewById(R.id.childroutes);
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -595,6 +615,144 @@ public class Main extends SherlockFragmentActivity {
                     showFragment(mMapFragment);
                 }
             });
+        }
+    }
+
+    public class AddMarker extends SherlockFragment {
+
+        public static final String TAG = "AddMarker";
+
+        public AddMarker() {}
+
+        @Override
+        public void onCreate(Bundle arg0) {
+            super.onCreate(arg0);
+            setRetainInstance(true);
+
+        }
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
+            // Inflate the ListView layout file.
+            return inflater.inflate(R.layout.addmarker, vg, false);
+        }
+        @Override
+        public void onViewCreated(View arg0, Bundle arg1) {
+            super.onViewCreated(arg0, arg1);
+
+            Button button = (Button)findViewById(R.id.submitbutton);
+            final EditText name = (EditText)findViewById(R.id.placename);
+            final EditText address = (EditText)findViewById(R.id.placeaddress);
+            final EditText subway = (EditText)findViewById(R.id.placesubway);
+            final EditText time = (EditText)findViewById(R.id.placetime);
+            final EditText description = (EditText)findViewById(R.id.placedescription);
+            final Spinner placetype = (Spinner)findViewById(R.id.placetype);
+
+            /*
+            Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
+            try {
+                List<Address> addresses = geoCoder.getFromLocation(clickedLatitude, clickedLongitude, 1);
+                if (addresses.size() > 0) {
+                    address.setText(addresses.get(0).getAddressLine(0));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            */
+
+
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    String desc = description.getText().toString();
+                    String nm = name.getText().toString();
+                    String addr = address.getText().toString();
+                    String tm = time.getText().toString();
+                    String sb = subway.getText().toString();
+
+                    final JsonObject json = new JsonObject();
+                    json.addProperty("Name", nm);
+                    json.addProperty("Description", desc);
+                    json.addProperty("Adress", addr);
+                    json.addProperty("WorkTime", tm);
+                    json.addProperty("Subway", sb);
+                    json.addProperty("lng", clickedLatitude);
+                    json.addProperty("lat", clickedLongitude);
+
+                    String fullDesc = "";
+                    if (!desc.equals("")) {
+                        fullDesc += desc + "\n";
+                    }
+                    if (!addr.equals("")) {
+                        fullDesc += "Адрес: " + addr;
+                    }
+                    if (!sb.equals("")) {
+                        fullDesc += "\n" + "Метро: " + sb;
+                    }
+                    if (!tm.equals("")) {
+                        fullDesc += "\n" + "Время работы: " + tm;
+                    }
+
+                    String s = placetype.getSelectedItem().toString();
+                    if (s.equals("Достопримечательности")) {
+                        json.addProperty("MarkerType_id", 0);
+                        oAttractions.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    } else if (s.equals("Развлечения")) {
+                        json.addProperty("MarkerType_id", 1);
+                        oEntertainments.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    } else if (s.equals("Театры")) {
+                        json.addProperty("MarkerType_id", 2);
+                        oTheaters.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    } else if (s.equals("Кинотеатры")) {
+                        json.addProperty("MarkerType_id", 3);
+                        oCinemas.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    } else if (s.equals("Музеи")) {
+                        json.addProperty("MarkerType_id", 4);
+                        oMuseums.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    } else if (s.equals("Клубы")) {
+                        json.addProperty("MarkerType_id", 5);
+                        oClubs.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    } else if (s.equals("Концертные залы")) {
+                        json.addProperty("MarkerType_id", 6);
+                        oConcerthalls.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    } else if (s.equals("Парки")) {
+                        json.addProperty("MarkerType_id", 7);
+                        oParks.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    } else if (s.equals("Магазины")) {
+                        json.addProperty("MarkerType_id", 8);
+                        oShops.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    } else if (s.equals("Отели и транспорт")) {
+                        json.addProperty("MarkerType_id", 9);
+                        oHotels.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    } else if (s.equals("Аэропорты")) {
+                        json.addProperty("MarkerType_id", 10);
+                        oAirports.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    } else if (s.equals("Вокзалы")) {
+                        json.addProperty("MarkerType_id", 11);
+                        oRailways.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
+                    }
+                    json.addProperty("User_id", 0);
+                    json.addProperty("IsChecked", 0);
+
+                    markersTable.insert(json, new TableJsonOperationCallback() {
+                        @Override
+                        public void onCompleted(JsonObject jsonObject, Exception exception, ServiceFilterResponse response) {
+                            Log.d("---AZURE INSERTED---", json.toString());
+                        }
+                    });
+
+                    name.setText("");
+                    address.setText("");
+                    subway.setText("");
+                    time.setText("");
+                    description.setText("");
+
+                    Exchanger.mMapView.setOnTouchListener(null);
+                    Exchanger.mMapView.postInvalidate();
+                    showFragment(mMapFragment);
+                }
+            });
+
         }
     }
 }
