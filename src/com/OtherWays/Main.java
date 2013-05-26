@@ -5,29 +5,21 @@ import android.content.Intent;
 import android.location.*;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.app.SherlockListFragment;
 import com.actionbarsherlock.view.ActionMode;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 
-import com.facebook.SessionState;
-import com.facebook.UiLifecycleHelper;
 import com.google.android.maps.*;
 import com.google.gson.*;
 
 import com.microsoft.windowsazure.mobileservices.*;
-
-import com.facebook.Session;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -37,9 +29,18 @@ import java.util.Locale;
 
 public class Main extends SherlockFragmentActivity {
 
+    private Integer USER_ID = null;
+    private String USER_LOGIN = "";
+    private String USER_PASSWORD = "";
+    public TextView userId;
+    public TextView userName;
+    public TextView status;
+    private Integer STATE = 0;
+
     private MapFragment mMapFragment;
-    private UserLogined mUserLogined;
-    private HomeFragment mHomeFragment;
+    private SignInFragment mSignInFragment;
+    private AutorizedFragment mAutorizedFragment;
+    private RegistrationFragment mRegistrationFragment;
     private LayersFragment mLayersFragment;
     private RoutesFragment mRoutesFragment;
     private AddMarker mAddMarker;
@@ -49,15 +50,7 @@ public class Main extends SherlockFragmentActivity {
 
     private MobileServiceClient mClient;
     private MobileServiceJsonTable markersTable;
-
-    private UiLifecycleHelper uiHelper;
-    private Session.StatusCallback callback =
-            new Session.StatusCallback() {
-                @Override
-                public void call(Session session, SessionState state, Exception exception) {
-                    onSessionStateChange(session, state, exception);
-                }
-            };
+    private MobileServiceJsonTable usersTable;
 
     public Location lastLocation;
     public LocationManager locationManager;
@@ -83,9 +76,6 @@ public class Main extends SherlockFragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        uiHelper = new UiLifecycleHelper(this, callback);
-        uiHelper.onCreate(savedInstanceState);
-
         Exchanger.mMapView = new MapView(this, "0BhdX4jIPYsj2IzVimXgILU8ICs51b2hhRZnVjQ");
 
         try {
@@ -95,12 +85,13 @@ public class Main extends SherlockFragmentActivity {
                     this
             );
             markersTable = mClient.getTable("Markers");
+            usersTable = mClient.getTable("Users");
         } catch (MalformedURLException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
 
         setupFragments();
-        showFragment(mHomeFragment);
+        showFragment(mSignInFragment);
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -108,34 +99,22 @@ public class Main extends SherlockFragmentActivity {
     @Override
     public void onResume() {
         super.onResume();
-        uiHelper.onResume();
     }
     @Override
     public void onPause() {
         super.onPause();
-        uiHelper.onPause();
     }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        uiHelper.onActivityResult(requestCode, resultCode, data);
     }
     @Override
     public void onDestroy() {
         super.onDestroy();
-        uiHelper.onDestroy();
     }
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        uiHelper.onSaveInstanceState(outState);
-    }
-    private void onSessionStateChange(Session session, SessionState state, Exception exception) {
-        if (state.isOpened()) {
-
-        } else if (state.isClosed()) {
-
-        }
     }
 
     private void setupFragments() {
@@ -148,19 +127,26 @@ public class Main extends SherlockFragmentActivity {
         }
         ft.hide(mMapFragment);
 
-        mUserLogined = (UserLogined) getSupportFragmentManager().findFragmentByTag(UserLogined.TAG);
-        if (mUserLogined == null) {
-            mUserLogined = new UserLogined();
-            ft.add(R.id.fragment_container, mUserLogined, UserLogined.TAG);
+        mSignInFragment = (SignInFragment) getSupportFragmentManager().findFragmentByTag(SignInFragment.TAG);
+        if (mSignInFragment == null) {
+            mSignInFragment = new SignInFragment();
+            ft.add(R.id.fragment_container, mSignInFragment, SignInFragment.TAG);
         }
-        ft.hide(mUserLogined);
+        ft.hide(mSignInFragment);
 
-        mHomeFragment = (HomeFragment) getSupportFragmentManager().findFragmentByTag(HomeFragment.TAG);
-        if (mHomeFragment == null) {
-            mHomeFragment = new HomeFragment();
-            ft.add(R.id.fragment_container, mHomeFragment, HomeFragment.TAG);
+        mAutorizedFragment = (AutorizedFragment) getSupportFragmentManager().findFragmentByTag(AutorizedFragment.TAG);
+        if (mAutorizedFragment == null) {
+            mAutorizedFragment = new AutorizedFragment();
+            ft.add(R.id.fragment_container, mAutorizedFragment, AutorizedFragment.TAG);
         }
-        ft.hide(mHomeFragment);
+        ft.hide(mAutorizedFragment);
+
+        mRegistrationFragment = (RegistrationFragment) getSupportFragmentManager().findFragmentByTag(RegistrationFragment.TAG);
+        if (mRegistrationFragment == null) {
+            mRegistrationFragment = new RegistrationFragment();
+            ft.add(R.id.fragment_container, mRegistrationFragment, RegistrationFragment.TAG);
+        }
+        ft.hide(mRegistrationFragment);
 
         mLayersFragment = (LayersFragment) getSupportFragmentManager().findFragmentByTag(LayersFragment.TAG);
         if (mLayersFragment == null) {
@@ -208,10 +194,28 @@ public class Main extends SherlockFragmentActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.ic_home:
-                showFragment(mHomeFragment);
+                switch (STATE) {
+                    case 0:
+                        showFragment(mSignInFragment);
+                        break;
+                    case 2:
+                        showFragment(mAutorizedFragment);
+                        break;
+                }
                 return true;
             case R.id.ic_map:
-                showFragment(mMapFragment);
+                if (USER_ID == null) {
+                    switch (STATE) {
+                        case 0:
+                            showFragment(mSignInFragment);
+                            break;
+                        case 2:
+                            showFragment(mAutorizedFragment);
+                            break;
+                    }
+                } else {
+                    showFragment(mMapFragment);
+                }
                 return true;
             case R.id.ic_settings:
                 startActionMode(new ActionMode.Callback() {
@@ -223,7 +227,7 @@ public class Main extends SherlockFragmentActivity {
                             menu.add("Center").setIcon(R.drawable.marker).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                             menu.add("Markers").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                             menu.add("Routes").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-                        } else if (tag.equals(HomeFragment.TAG)) {
+                        } else if (tag.equals(SignInFragment.TAG)) {
                         }
                         return true;
                     }
@@ -467,38 +471,169 @@ public class Main extends SherlockFragmentActivity {
         };
     }
 
-    public static class HomeFragment extends SherlockFragment {
-        public static final String TAG = "homeFragment";
+    public class SignInFragment extends SherlockFragment {
+        public static final String TAG = "SignInFragment";
 
-        public HomeFragment() {}
-
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
-            return inflater.inflate(R.layout.autification, vg, false);
-        }
-
-    }
-
-    public static class UserLogined extends SherlockFragment {
-        public static final String TAG = "UserLogined";
-
-        public UserLogined() {}
+        public SignInFragment() {}
 
         @Override
         public void onCreate(Bundle arg0) {
             super.onCreate(arg0);
             setRetainInstance(true);
+
         }
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
-            // Inflate the ListView layout file.
-            return inflater.inflate(R.layout.fbuser, vg, false);
+            return inflater.inflate(R.layout.autification, vg, false);
         }
         @Override
         public void onViewCreated(View arg0, Bundle arg1) {
             super.onViewCreated(arg0, arg1);
+
+            Button loginButton = (Button)findViewById(R.id.loginbutton);
+            Button regButton = (Button)findViewById(R.id.regbutton);
+
+            status = (TextView)findViewById(R.id.status);
+            final EditText login = (EditText)findViewById(R.id.login);
+            final EditText pass = (EditText)findViewById(R.id.password);
+
+            regButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showFragment(mRegistrationFragment);
+                }
+            });
+
+            loginButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String loginStr = login.getText().toString();
+                    String passStr = pass.getText().toString();
+
+
+                    usersTable.where().field("Name").eq(loginStr).and().field("Password").eq(passStr).execute(new TableJsonQueryCallback() {
+                        @Override
+                        public void onCompleted(JsonElement result, int count, Exception exception, ServiceFilterResponse response) {
+                            if (exception != null) {
+                                Log.d("---AZURE LOGIN FAILED---", exception.toString());
+                                status.setText("Exception!");
+                            } else {
+                                Log.d("---AZURE LOGIN---", result.toString());
+                                JsonArray jsonArray = result.getAsJsonArray();
+                                if (jsonArray.size() == 0) {
+                                    status.setText("Wrong Login or Password");
+                                } else {
+                                    status.setText("Login success");
+                                    JsonObject object = jsonArray.get(0).getAsJsonObject();
+                                    Integer id = object.get("id").getAsInt();
+                                    String name = object.get("Name").getAsString();
+                                    String password = object.get("Password").getAsString();
+                                    USER_ID = id;
+                                    USER_LOGIN = name;
+                                    USER_PASSWORD = password;
+                                    userId.setText("Your id: " + USER_ID);
+                                    userName.setText("Your name: " + USER_LOGIN);
+                                    STATE = 2;
+                                    showFragment(mAutorizedFragment);
+                                }
+                            }
+                        }
+                    });
+
+
+                }
+            });
         }
+
+    }
+
+    public class RegistrationFragment extends SherlockFragment {
+        public static final String TAG = "RegistrationFragment";
+
+        public RegistrationFragment() {}
+
+        @Override
+        public void onCreate(Bundle arg0) {
+            super.onCreate(arg0);
+            setRetainInstance(true);
+
+        }
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
+            return inflater.inflate(R.layout.registation, vg, false);
+        }
+        @Override
+        public void onViewCreated(View arg0, Bundle arg1) {
+            super.onViewCreated(arg0, arg1);
+
+            Button regButton = (Button)findViewById(R.id.registerbutton);
+            final EditText regLogin = (EditText)findViewById(R.id.reglogin);
+            final EditText regPass = (EditText)findViewById(R.id.regpassword);
+
+            regButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String login = regLogin.getText().toString();
+                    String pass = regPass.getText().toString();
+
+                    final JsonObject json = new JsonObject();
+                    json.addProperty("Name", login);
+                    json.addProperty("Password", pass);
+
+                    usersTable.insert(json, new TableJsonOperationCallback() {
+                        @Override
+                        public void onCompleted(JsonObject jsonObject, Exception exception, ServiceFilterResponse response) {
+                            if (exception != null) {
+                                Log.d("---AZURE USER FAILED---", exception.toString());
+                            } else {
+                                Log.d("---AZURE USER INSERTED---", json.toString());
+                            }
+                        }
+                    });
+                    STATE = 0;
+                    showFragment(mSignInFragment);
+                }
+            });
+        }
+
+    }
+
+    public class AutorizedFragment extends SherlockFragment {
+        public static final String TAG = "AutorizedFragment";
+
+        public AutorizedFragment() {}
+
+        @Override
+        public void onCreate(Bundle arg0) {
+            super.onCreate(arg0);
+            setRetainInstance(true);
+
+        }
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup vg, Bundle data) {
+            return inflater.inflate(R.layout.autorized, vg, false);
+        }
+        @Override
+        public void onViewCreated(View arg0, Bundle arg1) {
+            super.onViewCreated(arg0, arg1);
+
+            Button logOutbutton = (Button)findViewById(R.id.logoutbutton);
+            userId = (TextView)findViewById(R.id.userId);
+            userName = (TextView)findViewById(R.id.userName);
+
+            logOutbutton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    USER_ID = null;
+                    USER_LOGIN = "";
+                    USER_PASSWORD = "";
+                    STATE = 0;
+                    status.setText("");
+                    showFragment(mSignInFragment);
+                }
+            });
+        }
+
     }
 
     public class LayersFragment extends SherlockFragment {
@@ -731,25 +866,36 @@ public class Main extends SherlockFragmentActivity {
                         json.addProperty("MarkerType_id", 11);
                         oRailways.addOverlay(new OverlayItem(new GeoPoint( (int)(clickedLatitude * 1E6), (int)(clickedLongitude * 1E6) ), nm, fullDesc));
                     }
-                    json.addProperty("User_id", 0);
+
+                    if (null != USER_ID) {
+                        json.addProperty("User_id", USER_ID);
+                    } else {
+                        json.addProperty("User_id", 0);
+                    }
+
                     json.addProperty("IsChecked", 0);
 
                     markersTable.insert(json, new TableJsonOperationCallback() {
                         @Override
                         public void onCompleted(JsonObject jsonObject, Exception exception, ServiceFilterResponse response) {
-                            Log.d("---AZURE INSERTED---", json.toString());
+                            if (exception != null) {
+                                Log.d("---AZURE MARKER FAILED---", exception.toString());
+                            } else {
+                                Log.d("---AZURE MARKER INSERTED---", json.toString());
+                            }
                         }
                     });
+
+                    Exchanger.mMapView.setOnTouchListener(null);
+                    Exchanger.mMapView.invalidate();
+                    Exchanger.mMapView.postInvalidate();
+                    showFragment(mMapFragment);
 
                     name.setText("");
                     address.setText("");
                     subway.setText("");
                     time.setText("");
                     description.setText("");
-
-                    Exchanger.mMapView.setOnTouchListener(null);
-                    Exchanger.mMapView.postInvalidate();
-                    showFragment(mMapFragment);
                 }
             });
 

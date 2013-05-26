@@ -8,39 +8,26 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text=""
-            android:gravity="center"
-            android:id="@+id/status" android:layout_gravity="center"/>
+            android:id="@+id/regstatus" android:layout_gravity="center"/>
     <EditText
-            android:id="@+id/login"
+            android:id="@+id/reglogin"
             android:layout_height="wrap_content"
             android:hint="login"
             android:inputType="textPersonName"
             android:layout_width="fill_parent">
     </EditText>
     <EditText
-            android:id="@+id/password"
+            android:id="@+id/regpassword"
             android:layout_height="wrap_content"
             android:hint="password"
             android:inputType="textPassword"
-            android:layout_width="fill_parent" android:layout_alignLeft="@+id/login" android:layout_below="@+id/login"
+            android:layout_width="fill_parent" android:layout_alignLeft="@+id/reglogin" android:layout_below="@+id/reglogin"
             android:layout_gravity="center">
     </EditText>
     <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Log In"
-            android:id="@+id/loginbutton" android:layout_gravity="center"/>
-    <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Registration"
-            android:id="@+id/regbutton" android:layout_gravity="center"/>
-    <com.facebook.widget.LoginButton
-            android:id="@+id/fbloginbutton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal" />
-
-
+            android:text="Register"
+            android:id="@+id/registerbutton" android:layout_gravity="center"/>
 
 </LinearLayout>
