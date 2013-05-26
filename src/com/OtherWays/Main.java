@@ -54,8 +54,8 @@ public class Main extends SherlockFragmentActivity {
 
     public Location lastLocation;
     public LocationManager locationManager;
-    public Float clickedLatitude;
-    public Float clickedLongitude;
+    public Float clickedLatitude = null;
+    public Float clickedLongitude = null;
 
     public Overlay item;
     public Overlay oAttractions;
@@ -759,6 +759,8 @@ public class Main extends SherlockFragmentActivity {
 
         public AddMarker() {}
 
+        Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
+
         @Override
         public void onCreate(Bundle arg0) {
             super.onCreate(arg0);
@@ -782,18 +784,16 @@ public class Main extends SherlockFragmentActivity {
             final EditText description = (EditText)findViewById(R.id.placedescription);
             final Spinner placetype = (Spinner)findViewById(R.id.placetype);
 
-            /*
-            Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
-            try {
-                List<Address> addresses = geoCoder.getFromLocation(clickedLatitude, clickedLongitude, 1);
-                if (addresses.size() > 0) {
-                    address.setText(addresses.get(0).getAddressLine(0));
+            if (clickedLongitude != null && clickedLatitude != null) {
+                try {
+                    List<Address> addresses = geoCoder.getFromLocation(clickedLatitude, clickedLongitude, 1);
+                    if (addresses.size() > 0) {
+                        address.setText(addresses.get(0).getAddressLine(0));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
-            */
-
 
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
