@@ -23,6 +23,7 @@ import com.microsoft.windowsazure.mobileservices.*;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -32,6 +33,7 @@ public class Main extends SherlockFragmentActivity {
     private Integer USER_ID = null;
     private String USER_LOGIN = "";
     private String USER_PASSWORD = "";
+    public EditText address;
     public TextView userId;
     public TextView userName;
     public TextView status;
@@ -51,11 +53,12 @@ public class Main extends SherlockFragmentActivity {
     private MobileServiceClient mClient;
     private MobileServiceJsonTable markersTable;
     private MobileServiceJsonTable usersTable;
+    private MobileServiceJsonTable routeMarkersTable;
 
     public Location lastLocation;
     public LocationManager locationManager;
-    public Float clickedLatitude = null;
-    public Float clickedLongitude = null;
+    public Double clickedLatitude = null;
+    public Double clickedLongitude = null;
 
     public Overlay item;
     public Overlay oAttractions;
@@ -70,6 +73,9 @@ public class Main extends SherlockFragmentActivity {
     public Overlay oHotels;
     public Overlay oAirports;
     public Overlay oRailways;
+    public ArrayList<ArrayList<Integer>> routes = new ArrayList<ArrayList<Integer>>();
+    public ArrayList<ArrayList<String>> routesCoords = new ArrayList<ArrayList<String>>();
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -85,6 +91,7 @@ public class Main extends SherlockFragmentActivity {
                     this
             );
             markersTable = mClient.getTable("Markers");
+            routeMarkersTable = mClient.getTable("RouteMarkers");
             usersTable = mClient.getTable("Users");
         } catch (MalformedURLException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -94,7 +101,20 @@ public class Main extends SherlockFragmentActivity {
         showFragment(mSignInFragment);
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+        if (!locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) && !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            // no network provider is enabled
+        } else {
+            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                if (locationManager != null) {
+                    lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                }
+            } else if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                if (locationManager != null) {
+                    lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                }
+            }
+        }
     }
     @Override
     public void onResume() {
@@ -223,10 +243,10 @@ public class Main extends SherlockFragmentActivity {
                     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                         String tag = mVisible.getTag();
                         if (tag.equals(MapFragment.TAG)) {
-                            menu.add("Add").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                             menu.add("Center").setIcon(R.drawable.marker).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            menu.add("Add").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                             menu.add("Markers").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-                            menu.add("Routes").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            //menu.add("Routes").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                         } else if (tag.equals(SignInFragment.TAG)) {
                         }
                         return true;
@@ -243,16 +263,26 @@ public class Main extends SherlockFragmentActivity {
                                 @Override
                                 public boolean onTouch(View v, MotionEvent event) {
                                     if(event.getAction() == MotionEvent.ACTION_DOWN) {
+                                        Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
                                         Projection proj = Exchanger.mMapView.getProjection();
                                         GeoPoint loc = proj.fromPixels((int)event.getX(), (int)event.getY());
-                                        clickedLatitude = ((float)loc.getLongitudeE6())/1000000;
-                                        clickedLongitude = ((float)loc.getLatitudeE6())/1000000;
+                                        clickedLongitude = ((double)loc.getLongitudeE6())/1000000;
+                                        clickedLatitude = ((double)loc.getLatitudeE6())/1000000;
+                                        try {
+                                            List<Address> addresses = geoCoder.getFromLocation(clickedLatitude, clickedLongitude, 1);
+                                            if (addresses.size() > 0) {
+                                                address.setText(addresses.get(0).getAddressLine(0));
+                                            }
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
                                         Exchanger.mMapView.setOnTouchListener(null);
                                         showFragment(mAddMarker);
                                     }
                                     return true;
                                 }
                             });
+                            mode.finish();
                         }
                         if (item.toString().equals("Center")) {
                             if (lastLocation != null) {
@@ -266,11 +296,12 @@ public class Main extends SherlockFragmentActivity {
                         }
                         if (item.toString().equals("Markers")) {
                             showFragment(mLayersFragment);
+                            mode.finish();
                         }
                         if (item.toString().equals("Routes")) {
                             showFragment(mRoutesFragment);
+                            mode.finish();
                         }
-                        mode.finish();
                         return true;
                     }
                     @Override
@@ -297,7 +328,7 @@ public class Main extends SherlockFragmentActivity {
         public MapFragment() {}
 
         private void updateLoc(Location loc) {
-            GeoPoint locGeoPoint = new GeoPoint( (int)(loc.getLatitude()*1E6), (int)(loc.getLongitude()*1E6));
+            GeoPoint locGeoPoint = new GeoPoint((int)(loc.getLatitude()*1E6), (int)(loc.getLongitude()*1E6));
             mapController.animateTo(locGeoPoint);
             Exchanger.mMapView.getOverlays().remove(item);
             item = new Overlay(this.getResources().getDrawable(R.drawable.marker), context);
@@ -329,8 +360,8 @@ public class Main extends SherlockFragmentActivity {
         @Override
         public void onResume() {
             super.onResume();
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, myLocationListener);
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, myLocationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,  6000, 10, myLocationListener);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 6000, 10, myLocationListener);
         }
 
         @Override
@@ -364,7 +395,7 @@ public class Main extends SherlockFragmentActivity {
                     if (exception != null) {
                         Log.d("QUERY_EXCEPTION", exception.toString());
                     } else {
-                        Log.d("---AZURE---", result.toString());
+                        Log.d("---AZURE MARKERS---", result.toString());
                         JsonArray jsonArray = result.getAsJsonArray();
                         for (int i = 0; i < jsonArray.size(); i++) {
                             JsonObject object = jsonArray.get(i).getAsJsonObject();
@@ -447,10 +478,57 @@ public class Main extends SherlockFragmentActivity {
                     }
                 }
             });
+            /*
+            routeMarkersTable.where().top(100).execute(new TableJsonQueryCallback() {
+                @Override
+                public void onCompleted(JsonElement result, int count, Exception exception, ServiceFilterResponse response) {
+                    if (exception != null) {
+                        Log.d("QUERY_EXCEPTION", exception.toString());
+                    } else {
+                        Log.d("---AZURE ROUTES---", result.toString());
+                        JsonArray jsonArray = result.getAsJsonArray();
+
+                        int currIndex = 0; //текущий индекс
+                        ArrayList<Integer> currList = new ArrayList<Integer>(); //Текущий список
+                        for (int i = 0; i < jsonArray.size(); i++) {
+                            JsonObject object = jsonArray.get(i).getAsJsonObject();
+                            Integer route_id = object.get("Route_id").getAsInt();
+                            Integer marker_id = object.get("Marker_id").getAsInt();
+                            if(currIndex < route_id) {
+                                routes.add(currList);
+                                currList = new ArrayList<Integer>();
+                                currIndex++;
+                            } else {
+                                currList.add(marker_id);
+                            }
+                        }
+                    }
+                    for (ArrayList<Integer> route : routes) {
+                        final ArrayList<String> marker = new ArrayList<String>();
+                        for (Integer point : route) {
+                            markersTable.where().field("id").eq(point).execute(new TableJsonQueryCallback() {
+                                @Override
+                                public void onCompleted(JsonElement result, int count, Exception exception, ServiceFilterResponse response) {
+                                    JsonArray jsonArray = result.getAsJsonArray();
+                                    JsonObject object = jsonArray.get(0).getAsJsonObject();
+                                    Log.d("12345", object.toString());
+                                    String lng = object.get("lng").getAsString();
+                                    String lat = object.get("lat").getAsString();
+                                    marker.add(lat + "," + lng);
+                                }
+                            });
+                        }
+                        routesCoords.add(marker);
+                    }
+                    Log.d("----------", routesCoords.toString());
+
+                }
+            });
+            */
 
             return Exchanger.mMapView;
         }
-        private LocationListener myLocationListener = new LocationListener() {
+        LocationListener myLocationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 updateLoc(location);
@@ -778,22 +856,11 @@ public class Main extends SherlockFragmentActivity {
 
             Button button = (Button)findViewById(R.id.submitbutton);
             final EditText name = (EditText)findViewById(R.id.placename);
-            final EditText address = (EditText)findViewById(R.id.placeaddress);
+            address = (EditText)findViewById(R.id.placeaddress);
             final EditText subway = (EditText)findViewById(R.id.placesubway);
             final EditText time = (EditText)findViewById(R.id.placetime);
             final EditText description = (EditText)findViewById(R.id.placedescription);
             final Spinner placetype = (Spinner)findViewById(R.id.placetype);
-
-            if (clickedLongitude != null && clickedLatitude != null) {
-                try {
-                    List<Address> addresses = geoCoder.getFromLocation(clickedLatitude, clickedLongitude, 1);
-                    if (addresses.size() > 0) {
-                        address.setText(addresses.get(0).getAddressLine(0));
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
 
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -811,8 +878,8 @@ public class Main extends SherlockFragmentActivity {
                     json.addProperty("Adress", addr);
                     json.addProperty("WorkTime", tm);
                     json.addProperty("Subway", sb);
-                    json.addProperty("lng", clickedLatitude);
-                    json.addProperty("lat", clickedLongitude);
+                    json.addProperty("lng", clickedLongitude);
+                    json.addProperty("lat", clickedLatitude);
 
                     String fullDesc = "";
                     if (!desc.equals("")) {
